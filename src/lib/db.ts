@@ -20,7 +20,8 @@ import {
   mockCompanies,
 } from "./mock-data";
 
-function snakeToCamel(row: Record<string, unknown>): Record<string, unknown> {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function snakeToCamel(row: Record<string, unknown>): any {
   const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(row)) {
     const camelKey = key.replace(/_([a-z])/g, (_, c) => c.toUpperCase());
@@ -30,7 +31,7 @@ function snakeToCamel(row: Record<string, unknown>): Record<string, unknown> {
 }
 
 function rowsToType<T>(rows: Record<string, unknown>[]): T[] {
-  return rows.map((r) => snakeToCamel(r) as T);
+  return rows.map((r) => snakeToCamel(r));
 }
 
 export async function getNews(limit = 20): Promise<NewsArticle[]> {
