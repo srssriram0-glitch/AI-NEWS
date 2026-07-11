@@ -12,6 +12,10 @@ import {
   Building2,
   TrendingUp,
   Rss,
+  Database,
+  Loader2,
+  CheckCircle2,
+  XCircle,
 } from "lucide-react";
 import { adminFetch } from "@/lib/admin-api";
 
@@ -50,6 +54,22 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [logs, setLogs] = useState<RecentLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dbSetup, setDbSetup] = useState<{ running: boolean; results: { step: string; success: boolean; error?: string }[] | null }>({ running: false, results: null });
+
+  const runSetup = async () => {
+    setDbSetup({ running: true, results: null });
+    try {
+      const res = await adminFetch("/api/admin/setup-db", { method: "POST" });
+      const data = await res.json();
+      setDbSetup({ running: false, results: data.results });
+      if (data.success) {
+        const [statsRes] = await Promise.all([adminFetch("/api/admin/stats")]);
+        if (statsRes.ok) setStats(await statsRes.json());
+      }
+    } catch {
+      setDbSetup({ running: false, results: [{ step: "Connection", success: false, error: "Failed to connect" }] });
+    }
+  };
 
   useEffect(() => {
     async function load() {
@@ -99,6 +119,43 @@ export default function AdminDashboard() {
             </p>
           </div>
         ))}
+      </div>
+
+      {/* Database Setup */}
+      <div className="rounded-xl border border-border bg-card p-6">
+        <h3 className="mb-4 flex items-center gap-2 text-lg font-semibold">
+          <Database className="h-5 w-5 text-blue-500" />
+          Database Setup
+        </h3>
+        <p className="mb-4 text-sm text-muted-foreground">
+          Create all tables, search indexes, and seed data in Supabase with one click.
+        </p>
+        <button
+          onClick={runSetup}
+          disabled={dbSetup.running}
+          className="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+        >
+          {dbSetup.running ? (
+            <><Loader2 className="h-4 w-4 animate-spin" /> Setting up...</>
+          ) : (
+            <><Database className="h-4 w-4" /> Setup Database</>
+          )}
+        </button>
+        {dbSetup.results && (
+          <div className="mt-4 space-y-2">
+            {dbSetup.results.map((r, i) => (
+              <div key={i} className="flex items-center gap-2 text-sm">
+                {r.success ? (
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                ) : (
+                  <XCircle className="h-4 w-4 text-red-500" />
+                )}
+                <span>{r.step}</span>
+                {r.error && <span className="text-xs text-red-400">{r.error}</span>}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Quick Actions */}
