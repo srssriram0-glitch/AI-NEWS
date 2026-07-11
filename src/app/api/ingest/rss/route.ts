@@ -58,7 +58,7 @@ export async function POST(request: NextRequest) {
     const logEntry = {
       feed_id: feed.id,
       feed_name: feed.name,
-      status: "running" as const,
+      status: "running" as string,
       articles_found: 0,
       articles_added: 0,
       error_message: "",
